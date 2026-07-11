@@ -1,0 +1,44 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: omp-mongodb
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: operational_management
+
+  backend:
+    build:
+      context: ./backend
+      target: production
+    container_name: omp-backend
+    restart: unless-stopped
+    ports:
+      - '5001:5001'
+    environment:
+      NODE_ENV: production
+      PORT: 5001
+      MONGODB_URI: mongodb://mongodb:27017/operational_management
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      CLIENT_URL: http://localhost:5173
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      - mongodb
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: omp-frontend
+    restart: unless-stopped
+    ports:
+      - '5173:80'
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:
+  uploads_data:
